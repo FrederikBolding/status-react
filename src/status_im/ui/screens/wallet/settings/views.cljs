@@ -1,6 +1,7 @@
 (ns status-im.ui.screens.wallet.settings.views
   (:require-macros [status-im.utils.views :refer [defview letsubs]])
   (:require [re-frame.core :as re-frame]
+            [pluto.reader.hooks :as hooks]
             [status-im.i18n :as i18n]
             [status-im.ui.components.list.views :as list]
             [status-im.ui.components.react :as react]
@@ -10,6 +11,16 @@
             [status-im.ui.screens.wallet.styles :as wallet.styles]
             [status-im.utils.ethereum.core :as ethereum]
             [status-im.utils.ethereum.tokens :as tokens]))
+
+(def hook
+  "Hook for extensions"
+  {:properties
+   {:title  :string}
+   :hook
+   (reify hooks/Hook
+     (hook-in [_ id {:keys [title]} {:keys [db]}]
+       (assoc-in db [:wallet :settings "Hello"] {:title title}))
+     (unhook [_ id {:keys [scope]} {:keys [db] :as cofx}]))})
 
 (defn- render-token [{:keys [symbol name icon]} visible-tokens]
   [list/list-item-with-checkbox
@@ -38,3 +49,32 @@
       [list/flat-list {:data      (tokens/sorted-tokens-for (ethereum/network->chain-keyword network))
                        :key-fn    (comp str :symbol)
                        :render-fn #(render-token % visible-tokens)}]]]))
+
+(defview settings-hook []
+  (letsubs [params        [:get-screen-params]]
+    [react/view {:style (merge {:flex 0.5 :background-color :white :height 100})}
+     (println "!!!" params)
+     [status-bar/status-bar {:type :modal-wallet}]
+     [toolbar/toolbar {:style wallet.styles/toolbar}
+      [toolbar/nav-text {:handler             #(do (re-frame/dispatch [:update-wallet])
+                                                   (re-frame/dispatch [:navigate-back]))
+                         :style               {:color :white}
+                         :accessibility-label :done-button}
+       (i18n/label :t/done)]
+      [toolbar/content-title {:color :white}
+       "Salut"]]]))
+
+(defview toolbar-view []
+  (letsubs [settings [:wallet/settings]]
+    [toolbar/toolbar {:style wallet.styles/toolbar :flat? true}
+     nil
+     [toolbar/content-wrapper]
+     [toolbar/actions
+      [{:icon      :icons/options
+        :icon-opts {:color               :white
+                    :accessibility-label :options-menu-button}
+        :options   (into [{:label  (i18n/label :t/wallet-manage-assets)
+                           :action #(re-frame/dispatch [:navigate-to :wallet-settings-assets])}
+                          {:label  "Test"
+                           :action #(re-frame/dispatch [:navigate-to :wallet-settings-hook {}])}]
+                         settings)}]]]))

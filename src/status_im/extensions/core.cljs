@@ -12,6 +12,7 @@
             [status-im.ui.components.checkbox.view :as checkbox]
             [status-im.ui.components.list.views :as list]
             [status-im.ui.components.react :as react]
+            [status-im.ui.screens.wallet.settings.views :as settings]
             [status-im.i18n :as i18n]
             [status-im.ui.components.colors :as colors]
             [status-im.ui.screens.navigation :as navigation]
@@ -279,7 +280,8 @@
                                :params?    :vector
                                :outputs?   :vector
                                :on-result  :event}}}
-   :hooks      {:commands commands/command-hook}})
+   :hooks      {:commands        commands/command-hook
+                :wallet.settings settings/hook}})
 
 (defn parse [{:keys [data]}]
   (try
